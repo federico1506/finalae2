@@ -18,17 +18,13 @@ import {
 
 const Citas = () => {
     const [selectedDate, setSelectedDate] = useState(null);
-    // Como settear el BlockedDates
     const [blockedDates, setBlockedDates] = useState([]);
-
-    const handleDateChange = date => {
-      setSelectedDate(date);
-    };
     const formRef = useRef(null);
     const doctoresRef = collection(db, 'doctores');
     const [doctores, setDoctores] = useState([]);
-    const [selectedTipo1, setselectedTipo1] = useState('');
+    const [selectedTipo1, setSelectedTipo1] = useState('');
 
+    // Obtener la data de los doctores, PODRIAS HACERLO MODULAR
     useEffect(() => {
       const fetchData = async () => {
         const snapshot = await getDocs(doctoresRef);
@@ -39,9 +35,33 @@ const Citas = () => {
       fetchData();
     }, [doctoresRef]);
 
-    const tipo1Change = (event) => {
-      setselectedTipo1(event.target.value);
+    // Funcion al cambiar el doctor se cambie el valor de las fechas bloqueadas
+    const tipo1Change = async (event) => {
+      const selectedDoctor = event.target.value;
+      setSelectedTipo1(selectedDoctor);
+      console.log(selectedDoctor);
+      if (selectedDoctor) {
+        try {
+          const fechas = await verificarDisponibilidadDoctor(selectedDoctor);
+          // Asegúrate de que las fechas estén en el formato correcto (dd/MM/yyyy)
+          const formattedDates = fechas.map(date => {
+            const parts = date.split('/'); // Suponiendo que las fechas están en formato 'dd/MM/yyyy'
+            const formattedDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            return formattedDate;
+          });
+          setBlockedDates(formattedDates);
+        } catch (error) {
+          console.error('Error al obtener fechas ocupadas:', error);
+        }
+      }
     };
+
+
+     //El handle de cambiar la fecha
+     const handleDateChange = date => {
+       setSelectedDate(date);
+     };
+    // Funcion para enviar la cita
 
     const functEnviarCita = async (e) => {
         e.preventDefault();
@@ -64,9 +84,6 @@ const Citas = () => {
             return;
           }
           try {
-            // Verificar disponibilidad del doctor
-            const doctorDisponible = await verificarDisponibilidadDoctor(tipo1, fecha);
-            if (doctorDisponible) {
                 console.log('Cita registrada con éxito');
                 formRef.current.reset();
                 await addDoc(collection(db, 'citas'), {
@@ -77,9 +94,6 @@ const Citas = () => {
                     fecha: fecha,
                     motivosTurno: motivosTurno,
                 });
-            } else {
-              console.log('Dia ocupado');
-            }
           } catch (error) {
             Swal.fire({
               title: 'Error',
@@ -125,17 +139,18 @@ const Citas = () => {
             >
             {doctores.map((tipo_1) => (
             <option key={tipo_1.uid} value={tipo_1.uid}>
-                Nombre: {tipo_1.nombre}<p>/</p> {tipo_1.especialidad} {'  '}
-                Horario: {tipo_1.horarioEntrada}<p>-</p>{tipo_1.horarioSalida}
+                Nombre: {tipo_1.nombre}/ {tipo_1.especialidad} {'  '}
+                Horario: {tipo_1.horarioEntrada}-{tipo_1.horarioSalida}
             </option>
             ))}
             </Select>
           </FormControl>
 
+
           <FormControl mb={'6'}>
             <FormLabel>Fecha</FormLabel>
             <Box>
-            <Input
+             <Input
               type='date'
               id='fecha'
               selected={selectedDate}
