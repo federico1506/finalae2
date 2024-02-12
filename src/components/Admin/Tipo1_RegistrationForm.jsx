@@ -32,7 +32,7 @@ const Tipo1_RegistrationForm = () => {
     const correo = e.target.email.value;
     const contraseña = e.target.password.value;
     const apellido = e.target.lastname.value;
-    const especialidad = e.target.speciality.value;
+    const especialidad = e.target.specialty.value;
     const horarioEntrada = e.target.entryTime.value;
     const horarioSalida = e.target.departureTime.value;
     const confirmarCont = e.target.confirmpassword.value;
@@ -123,7 +123,7 @@ const Tipo1_RegistrationForm = () => {
 
           <FormControl mb={'6'}>
             <FormLabel>Apellido</FormLabel>
-            <Input type="text" id="lastsurname" placeholder="Ingresa tu apellido"/>
+            <Input type="text" id="lastname" placeholder="Ingresa tu apellido"/>
           </FormControl>
 
           <FormControl mb={'6'}>

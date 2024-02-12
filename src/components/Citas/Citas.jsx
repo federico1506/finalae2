@@ -4,29 +4,56 @@ import {
     Input,
     Box,
     Button,
-    Heading
+    Heading,
+    Select,
+    Textarea,
   } from '@chakra-ui/react'
-  import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
-  import { getFirestore, collection, addDoc } from 'firebase/firestore';
+  import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
   import appFirebase from '../../credenciales'
   import Swal from 'sweetalert2'
-  import { useRef, useEffect } from 'react';
-  import { useNavigate } from "react-router-dom";
+  import verificarDisponibilidadDoctor from "./VerificarDisponibilidad"
+  import { useRef, useState, useEffect } from 'react';
 
   const db = getFirestore(appFirebase);
 
 const Citas = () => {
+    const [selectedDate, setSelectedDate] = useState(null);
+    // Como settear el BlockedDates
+    const [blockedDates, setBlockedDates] = useState([]);
+
+    const handleDateChange = date => {
+      setSelectedDate(date);
+    };
     const formRef = useRef(null);
-    const functAutenticacion = async (e) => {
+    const doctoresRef = collection(db, 'doctores');
+    const [doctores, setDoctores] = useState([]);
+    const [selectedTipo1, setselectedTipo1] = useState('');
+
+    useEffect(() => {
+      const fetchData = async () => {
+        const snapshot = await getDocs(doctoresRef);
+        const doctoresData = snapshot.docs.map((doc) => doc.data());
+        setDoctores(doctoresData);
+      };
+
+      fetchData();
+    }, [doctoresRef]);
+
+    const tipo1Change = (event) => {
+      setselectedTipo1(event.target.value);
+    };
+
+    const functEnviarCita = async (e) => {
         e.preventDefault();
 
         const nombre = e.target.name.value;
         const correo = e.target.email.value;
         const documento = e.target.dni.value;
         const tipo1 = e.target.tipo1.value;
+        const fecha = e.target.fecha.value;
+        const motivosTurno = e.target.motivosTurno.value;
 
-
-        if (!nombre || !correo || !documento || !tipo1) {
+        if (!nombre || !correo || !documento || !tipo1 || !fecha || !motivosTurno) {
             Swal.fire({
               title: 'Error',
               text: 'Por favor, completa todos los campos antes de enviar el formulario.',
@@ -37,21 +64,22 @@ const Citas = () => {
             return;
           }
           try {
-            console.log('Cita registrada con exito');
-            formRef.current.reset();
-            Swal.fire({
-                title: '¡Éxito!',
-                text: 'Su cita a sido regitrado con éxito!',
-                icon: 'success',
-                confirmButtonText: 'Aceptar',
-                scrollbarPadding: false
-              });
-            await addDoc(collection(db, 'citas'), {
-              uid: documento,
-              email: correo,
-              nombre: nombre,
-              tipo1: tipo1,
-            });
+            // Verificar disponibilidad del doctor
+            const doctorDisponible = await verificarDisponibilidadDoctor(tipo1, fecha);
+            if (doctorDisponible) {
+                console.log('Cita registrada con éxito');
+                formRef.current.reset();
+                await addDoc(collection(db, 'citas'), {
+                    uid: documento,
+                    email: correo,
+                    nombre: nombre,
+                    tipo1: tipo1,
+                    fecha: fecha,
+                    motivosTurno: motivosTurno,
+                });
+            } else {
+              console.log('Dia ocupado');
+            }
           } catch (error) {
             Swal.fire({
               title: 'Error',
@@ -71,7 +99,7 @@ const Citas = () => {
       </Box>
 
       <Box p={"60px"} m={"60px"}>
-        <form onSubmit={functAutenticacion} ref={formRef}>
+        <form onSubmit={functEnviarCita} ref={formRef}>
           <FormControl mb={'6'}>
             <FormLabel>Nombre</FormLabel>
             <Input type="text" id="name" placeholder="Ingresa tu nombre"/>
@@ -84,12 +112,46 @@ const Citas = () => {
 
           <FormControl mb={'6'}>
             <FormLabel>Documento de identidad</FormLabel>
-            <Input type="number" id="dni" placeholder="Ingresa tu dni"/>
+            <Input type="number" id="dni" placeholder="Ingresa tu DNI"/>
           </FormControl>
 
           <FormControl mb={'6'}>
             <FormLabel>Doctor a cargo</FormLabel>
-            <Input type="text" id="tipo1"/>
+            <Select
+              id="tipo1"
+              placeholder="Seleccione su doctor a cargo"
+              value={selectedTipo1}
+              onChange={tipo1Change}
+            >
+            {doctores.map((tipo_1) => (
+            <option key={tipo_1.uid} value={tipo_1.uid}>
+                Nombre: {tipo_1.nombre}<p>/</p> {tipo_1.especialidad} {'  '}
+                Horario: {tipo_1.horarioEntrada}<p>-</p>{tipo_1.horarioSalida}
+            </option>
+            ))}
+            </Select>
+          </FormControl>
+
+          <FormControl mb={'6'}>
+            <FormLabel>Fecha</FormLabel>
+            <Box>
+            <Input
+              type='date'
+              id='fecha'
+              selected={selectedDate}
+              onChange={handleDateChange}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="Selecciona una fecha"
+              excludeDates={blockedDates} // VER ESTA PROPIEDAD
+              min={new Date().toISOString().split('T')[0]} // Limita las fechas pasadas
+              max="2024-12-31" // Limita las fechas futuras
+            />
+            </Box>
+          </FormControl>
+
+          <FormControl mb={'6'}>
+            <FormLabel>Motivos del turno</FormLabel>
+            <Textarea type="text" id="motivosTurno"/>
           </FormControl>
 
           <Box>

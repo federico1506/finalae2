@@ -6,7 +6,7 @@ import {
   Button,
   Heading
 } from '@chakra-ui/react'
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import appFirebase from '../../credenciales'
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
@@ -46,54 +46,52 @@ const Login = () => {
       return;
     }
 
+    // Modulo, CARGANDO USUARIO pop up SOLUCIONAR PROBLEMA
+    let timerInterval;
+    Swal.fire({
+      title: "Cargando",
+      timer: 2000,
+      timerProgressBar: true,
+      didOpen: async () => {
+        Swal.showLoading();
+        const timer = Swal.getPopup().querySelector("b");
+        timerInterval = setInterval(() => {
+          timer.textContent = `${Swal.getTimerLeft()}`;
+        }, 100);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        clearInterval(timerInterval);
+      },
+      willClose: () => {
+        clearInterval(timerInterval);
+      }
+    })
+
     try {
     const userCredential = await signInWithEmailAndPassword(auth, correo, contraseña);
     const user = userCredential.user;
     const querySnapshot = await getDocs(collection(db, 'usuarios'));
     const userDoc = querySnapshot.docs.find(doc => doc.data().uid === user.uid);
 
-    // Modulo, CARGANDO USUARIO pop up
-    const showLoadingSwal = async (redirectPath) => {
-      let timerInterval;
-      Swal.fire({
-        title: "Cargando",
-        timer: 2000,
-        timerProgressBar: true,
-        didOpen: async () => {
-          Swal.showLoading();
-          const timer = Swal.getPopup().querySelector("b");
-          timerInterval = setInterval(() => {
-            timer.textContent = `${Swal.getTimerLeft()}`;
-          }, 100);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          clearInterval(timerInterval);
-          Swal.close();
-          navigate(redirectPath);
-        },
-        willClose: () => {
-          clearInterval(timerInterval);
-        }
-      })
-    }
-
     if (userDoc) {
       const userData = userDoc.data();
       const userRole = userData.role;
+      const userEmail = userData.email;
 
-      login(userRole);
+      login(userRole, userEmail);
 
-      if (userRole === 'doctor') {
-        showLoadingSwal("/Form1");
-      } else if (userRole === 'paciente') {
-        showLoadingSwal("/Form2");
-      } else if (userRole === 'admin') {
-        showLoadingSwal("/Admin");
-      }
-      else {
+      navigate("/");
+      {
         console.error('Rol de usuario desconocido');
       }
     } else {
       console.error('No se encontró información del usuario');
+      Swal.fire({
+        title: 'Error',
+        text: 'El usuario no existe.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+        scrollbarPadding: false
+      });
     }
   } catch (error) {
 
