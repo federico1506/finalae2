@@ -8,15 +8,19 @@ import {
     Select,
     Textarea,
   } from '@chakra-ui/react'
+  import DatePicker from 'react-datepicker';
+  import 'react-datepicker/dist/react-datepicker.css';
   import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
   import appFirebase from '../../credenciales'
   import Swal from 'sweetalert2'
   import verificarDisponibilidadDoctor from "./VerificarDisponibilidad"
   import { useRef, useState, useEffect } from 'react';
+  import { useAuth } from '../../AuthContext';
 
   const db = getFirestore(appFirebase);
 
 const Citas = () => {
+    const { userEmail } = useAuth();
     const [selectedDate, setSelectedDate] = useState(null);
     const [blockedDates, setBlockedDates] = useState([]);
     const formRef = useRef(null);
@@ -43,19 +47,23 @@ const Citas = () => {
       if (selectedDoctor) {
         try {
           const fechas = await verificarDisponibilidadDoctor(selectedDoctor);
-          // Asegúrate de que las fechas estén en el formato correcto (dd/MM/yyyy)
-          const formattedDates = fechas.map(date => {
-            const parts = date.split('/'); // Suponiendo que las fechas están en formato 'dd/MM/yyyy'
-            const formattedDate = new Date(parts[2], parts[1] - 1, parts[0]);
-            return formattedDate;
-          });
-          setBlockedDates(formattedDates);
+          console.log(fechas) ;
+          setBlockedDates(fechas);
         } catch (error) {
           console.error('Error al obtener fechas ocupadas:', error);
         }
       }
     };
 
+    useEffect(() => {
+      console.log('BlockedDates');
+      console.log(blockedDates);
+    }, [blockedDates]);
+
+    const formattedBlockedDates = blockedDates.map(dateString => {
+      const [day, month, year] = dateString.split('/');
+      return new Date(year, month - 1, day);
+    });
 
      //El handle de cambiar la fecha
      const handleDateChange = date => {
@@ -85,7 +93,16 @@ const Citas = () => {
           }
           try {
                 console.log('Cita registrada con éxito');
+                Swal.fire({
+                  title: '¡Éxito!',
+                  text: 'Su cita a sido regitrada con éxito!',
+                  icon: 'success',
+                  confirmButtonText: 'Aceptar',
+                  scrollbarPadding: false
+                });
                 formRef.current.reset();
+                setSelectedTipo1('');
+                setSelectedDate(null);
                 await addDoc(collection(db, 'citas'), {
                     uid: documento,
                     email: correo,
@@ -121,7 +138,7 @@ const Citas = () => {
 
           <FormControl mb={'6'}>
             <FormLabel>Email</FormLabel>
-            <Input type="email" id="email" placeholder="Ingresa tu email"/>
+            <Input type="email" id="email" value={userEmail} readOnly/>
           </FormControl>
 
           <FormControl mb={'6'}>
@@ -146,20 +163,18 @@ const Citas = () => {
             </Select>
           </FormControl>
 
-
           <FormControl mb={'6'}>
             <FormLabel>Fecha</FormLabel>
             <Box>
-             <Input
-              type='date'
+            <DatePicker
               id='fecha'
               selected={selectedDate}
               onChange={handleDateChange}
               dateFormat="dd/MM/yyyy"
               placeholderText="Selecciona una fecha"
-              excludeDates={blockedDates} // VER ESTA PROPIEDAD
-              min={new Date().toISOString().split('T')[0]} // Limita las fechas pasadas
-              max="2024-12-31" // Limita las fechas futuras
+              excludeDates={formattedBlockedDates} // Aquí puedes usar el arreglo de fechas bloqueadas
+              minDate={new Date()} // Limita las fechas pasadas
+              maxDate={new Date(2024, 11, 31)} // Limita las fechas futuras
             />
             </Box>
           </FormControl>
