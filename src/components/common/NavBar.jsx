@@ -30,8 +30,11 @@ const NavBar = () => {
     navigate("/DashboardCitas");
   };
 
+  const toCitasGestionar = () => {
+    navigate("/GestionCitas");
+  };
+
   const handleLogout = () => {
-    // Lógica de cierre de sesión aquí...
     logout();
     navigate("/");
   };
@@ -57,7 +60,8 @@ const NavBar = () => {
               {userRole === 'doctor' && (
                 <>
                   <Link onClick={toHome}>Inicio</Link>
-                  <Link to="/GestionarCitas">Gestionar Citas</Link>
+                  <Link onClick={toCitasGestionar}>Gestionar Citas</Link>
+                  <Link >Fichas medicas</Link>
                 </>
               )}
               <Button onClick={handleLogout} colorScheme='blue' variant="outline">

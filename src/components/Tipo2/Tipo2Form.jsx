@@ -40,6 +40,7 @@ const Tipo2Form = () => {
 
     const nombre = e.target.name.value;
     const correo = e.target.email.value;
+    const telefono = e.target.telefono.value;
     const contraseña = e.target.password.value;
     const dni = e.target.dni.value;
     const obraSocial = e.target.obraSocial.value;
@@ -56,7 +57,7 @@ const Tipo2Form = () => {
       });
       return;
     }
-    if (!nombre || !correo || !contraseña|| !dni|| !obraSocial|| !apellido) {
+    if (!nombre || !correo || !contraseña|| !dni|| !obraSocial|| !apellido || !telefono) {
       Swal.fire({
         title: 'Error',
         text: 'Por favor, completa todos los campos antes de enviar el formulario.',
@@ -86,6 +87,7 @@ const Tipo2Form = () => {
         dni: dni,
         obraSocial : obraSocial,
         email: correo,
+        telefono: telefono,
         nombre: nombre,
         apellido: apellido,
         role: 'paciente',
@@ -96,6 +98,7 @@ const Tipo2Form = () => {
         uid: user.uid,
         dni: dni,
         obraSocial : obraSocial,
+        telefono: telefono,
         email: correo,
         apellido: apellido,
         role: 'paciente',
@@ -138,7 +141,12 @@ const Tipo2Form = () => {
 
           <FormControl mb={'6'}>
             <FormLabel>Documento de identidad</FormLabel>
-            <Input type="number" id="dni" placeholder="Ingresa tu DNI"/>
+            <Input type="text" id="dni" placeholder="Ingresa tu DNI"/>
+          </FormControl>
+
+          <FormControl mb={'6'}>
+            <FormLabel>Numero de telefono</FormLabel>
+            <Input type="number" id="telefono" placeholder="Ingresa tu telefono"/>
           </FormControl>
 
           <FormControl mb={'6'}>

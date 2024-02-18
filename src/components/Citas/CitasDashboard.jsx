@@ -13,11 +13,13 @@ import {
     import Swal from 'sweetalert2'
     import { useEffect, useState} from 'react';
     import { useAuth } from '../../AuthContext';
+    import { useNavigate } from "react-router-dom";
 
 const db = getFirestore(appFirebase);
 
 const CitasDashboard = () => {
-  const { isLoggedIn, userRole, userEmail } = useAuth();
+  const navigate = useNavigate();
+  const { userEmail } = useAuth();
   const citasRef = collection(db, 'citas');
   const doctoresRef = collection (db, 'doctores');
   const [citas, setCitas] = useState([]);
@@ -33,7 +35,6 @@ const CitasDashboard = () => {
       const doctorMap = {};
       doctoresData.forEach(doctor => {
         doctorMap[doctor.uid] = doctor.nombre;
-        doctorMap[doctor.uid] = doctor.especialidad;
       });
       const citasConNombres = citasFiltradas.map(cita => ({
         ...cita,
@@ -46,7 +47,7 @@ const CitasDashboard = () => {
   }, [citasRef, doctoresRef, userEmail]);
 
 
-  // Buscar optimizar el codigo
+  // Buscar optimizar el codigo y hacerlo modular
   const cancelarCita = async (emailCita) => {
     try {
       const citasSnapshot = await getDocs(collection(db, 'citas'));
@@ -68,17 +69,21 @@ const CitasDashboard = () => {
     }
   };
 
+  // Refactored function to edit appointment by passing citaId as state to the navigate function
+  const editarCita = (citaId) => {
+    navigate(`/ModificarCita`, { state: { citaId } });
+  };
+
   return (
     <div>
       <h1>Citas Dashboard</h1>
-      <Table variant="striped">
+      <Table variant="simple">
       <TableCaption>Lista de Citas</TableCaption>
       <Thead>
         <Tr>
           <Th>DNI</Th>
           <Th>Email</Th>
           <Th>Doctor a cargo</Th>
-          <Th>Especialidad</Th>
           <Th>Fecha</Th>
           <Th>Motivo</Th>
           <Th>Acciones</Th>
@@ -87,10 +92,10 @@ const CitasDashboard = () => {
       <Tbody>
         {citas.map((cita, index) => (
           <Tr key={index}>
-            <Td>{cita.uid}</Td>
+            <Td>{cita.documento}</Td>
             <Td>{cita.email}</Td>
+            {/* Fijarse porque te pasa como parametro la especialidad en vez del doctor a cargo */}
             <Td>{cita.tipo1}</Td>
-            <Td>{cita.especialidad}</Td>
             <Td>{cita.fecha}</Td>
             <Td>{cita.motivosTurno}</Td>
             <Td>
@@ -103,6 +108,18 @@ const CitasDashboard = () => {
               }}
             >
               Cancelar cita
+            </Button>
+            </Td>
+            <Td>
+            <Button
+              colorScheme="blue"
+              onClick={() => {
+                if (window.confirm("¿Estás seguro de que quieres editar esta cita?")) {
+                  editarCita(cita.uid);
+                }
+              }}
+            >
+              Editar Cita
             </Button>
             </Td>
           </Tr>

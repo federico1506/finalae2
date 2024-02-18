@@ -78,11 +78,7 @@ const Login = () => {
       const userEmail = userData.email;
 
       login(userRole, userEmail);
-
       navigate("/");
-      {
-        console.error('Rol de usuario desconocido');
-      }
     } else {
       console.error('No se encontró información del usuario');
       Swal.fire({

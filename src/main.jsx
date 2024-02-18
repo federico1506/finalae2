@@ -18,6 +18,8 @@ import Tipo1_RegistrationForm from './components/Admin/Tipo1_RegistrationForm.js
 import AdminDashboard from './components/Admin/AdminDashboard.jsx';
 import Citas from './components/Citas/Citas.jsx';
 import CitasDashboard from './components/Citas/CitasDashboard.jsx';
+import Tipo1Editor from './components/Tipo1/Tipo1Editor.jsx';
+import ModificarCita from './components/Citas/ModificarCita.jsx';
 
 const router = createBrowserRouter([
 // ROUTES pagina inicio
@@ -60,8 +62,6 @@ const router = createBrowserRouter([
   errorElement: <ErrorPage />,
 },
 
-
-
 // ROUTES tipo1
 {
   path: "/Form1",
@@ -69,6 +69,18 @@ const router = createBrowserRouter([
   errorElement: <ErrorPage />,
 },
 
+{
+  path: "/GestionCitas",
+  element: <Tipo1Editor />,
+  errorElement: <ErrorPage />,
+},
+
+// ROUTES tipo1 y tipo2
+{
+  path: "/ModificarCita",
+  element: <ModificarCita />,
+  errorElement: <ErrorPage />,
+},
 
 // ROUTES admin
 {

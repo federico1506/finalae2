@@ -10,7 +10,7 @@ import {
   } from '@chakra-ui/react'
   import DatePicker from 'react-datepicker';
   import 'react-datepicker/dist/react-datepicker.css';
-  import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
+  import { getFirestore, collection, addDoc, getDocs, query, where} from 'firebase/firestore';
   import appFirebase from '../../credenciales'
   import Swal from 'sweetalert2'
   import verificarDisponibilidadDoctor from "./VerificarDisponibilidad"
@@ -26,7 +26,34 @@ const Citas = () => {
     const formRef = useRef(null);
     const doctoresRef = collection(db, 'doctores');
     const [doctores, setDoctores] = useState([]);
+    const [paciente, setPaciente] = useState([]);
     const [selectedTipo1, setSelectedTipo1] = useState('');
+
+    useEffect(() => {
+    const fetchPaciente = async () => {
+      console.log(`Iniciando la búsqueda del paciente con email: ${userEmail}`);
+      const pacientesRef = collection(db, 'pacientes');
+      const q = query(pacientesRef, where('email', '==', userEmail));
+
+      try {
+        const snapshot = await getDocs(q);
+        console.log(`Snapshot obtenido:`, snapshot);
+
+        if (!snapshot.empty) {
+          const pacienteData = snapshot.docs[0].data();
+          console.log(`Datos del paciente encontrados:`, pacienteData);
+          setPaciente(pacienteData);
+        } else {
+          console.log(`No se encontraron datos para el paciente con email: ${userEmail}`);
+        }
+      } catch (error) {
+        console.error(`Error al obtener datos del paciente:`, error);
+      }
+    };
+
+    fetchPaciente();
+  }, [userEmail]);
+
 
     // Obtener la data de los doctores, PODRIAS HACERLO MODULAR
     useEffect(() => {
@@ -70,18 +97,23 @@ const Citas = () => {
        setSelectedDate(date);
      };
     // Funcion para enviar la cita
+    const generateUID = () => {
+      return (Date.now().toString(36) + Math.random().toString(36).substr(2)).substr(0, 5);
+    };
 
     const functEnviarCita = async (e) => {
         e.preventDefault();
-
+        const uid = generateUID();
         const nombre = e.target.name.value;
+        const telefono = e.target.telefono.value;
+        const obraSocial = e.target.obraSocial.value;
         const correo = e.target.email.value;
         const documento = e.target.dni.value;
         const tipo1 = e.target.tipo1.value;
         const fecha = e.target.fecha.value;
         const motivosTurno = e.target.motivosTurno.value;
 
-        if (!nombre || !correo || !documento || !tipo1 || !fecha || !motivosTurno) {
+        if (!nombre || !correo || !documento || !tipo1 || !fecha || !motivosTurno || !obraSocial || !telefono) {
             Swal.fire({
               title: 'Error',
               text: 'Por favor, completa todos los campos antes de enviar el formulario.',
@@ -104,8 +136,11 @@ const Citas = () => {
                 setSelectedTipo1('');
                 setSelectedDate(null);
                 await addDoc(collection(db, 'citas'), {
-                    uid: documento,
+                    uid: uid,
+                    documento: documento,
                     email: correo,
+                    telefono: telefono,
+                    obraSocial: obraSocial,
                     nombre: nombre,
                     tipo1: tipo1,
                     fecha: fecha,
@@ -131,19 +166,36 @@ const Citas = () => {
 
       <Box p={"60px"} m={"60px"}>
         <form onSubmit={functEnviarCita} ref={formRef}>
-          <FormControl mb={'6'}>
-            <FormLabel>Nombre</FormLabel>
-            <Input type="text" id="name" placeholder="Ingresa tu nombre"/>
-          </FormControl>
+          <Box display={"flex"} justifyContent={"space-between"}>
+            <FormControl mb={'6'} mr={'2'}>
+              <FormLabel>Nombre</FormLabel>
+              <Input type="text" id="name" value={paciente.nombre} readOnly color={"gray"}/>
+            </FormControl>
+
+            <FormControl mb={'6'}>
+              <FormLabel>Apellido</FormLabel>
+              <Input type="text" id="lastName" value={paciente.apellido} readOnly color={"gray"}/>
+            </FormControl>
+          </Box>
 
           <FormControl mb={'6'}>
             <FormLabel>Email</FormLabel>
-            <Input type="email" id="email" value={userEmail} readOnly/>
+            <Input type="email" id="email" value={paciente.email} readOnly color={"gray"}/>
+          </FormControl>
+
+          <FormControl mb={'6'}>
+            <FormLabel>Numero de telefono</FormLabel>
+            <Input type="number" id="telefono" value={paciente.telefono} readOnly color={"gray"}/>
           </FormControl>
 
           <FormControl mb={'6'}>
             <FormLabel>Documento de identidad</FormLabel>
-            <Input type="number" id="dni" placeholder="Ingresa tu DNI"/>
+            <Input type="number" id="dni" value={paciente.dni} readOnly color={"gray"}/>
+          </FormControl>
+
+          <FormControl mb={'6'}>
+            <FormLabel>Obra social</FormLabel>
+            <Input type="text" id="obraSocial" value={paciente.obraSocial} readOnly color={"gray"}/>
           </FormControl>
 
           <FormControl mb={'6'}>
@@ -172,9 +224,9 @@ const Citas = () => {
               onChange={handleDateChange}
               dateFormat="dd/MM/yyyy"
               placeholderText="Selecciona una fecha"
-              excludeDates={formattedBlockedDates} // Aquí puedes usar el arreglo de fechas bloqueadas
-              minDate={new Date()} // Limita las fechas pasadas
-              maxDate={new Date(2024, 11, 31)} // Limita las fechas futuras
+              excludeDates={formattedBlockedDates}
+              minDate={new Date()}
+              maxDate={new Date(2024, 11, 31)}
             />
             </Box>
           </FormControl>
