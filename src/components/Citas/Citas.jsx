@@ -105,6 +105,7 @@ const Citas = () => {
         e.preventDefault();
         const uid = generateUID();
         const nombre = e.target.name.value;
+        const apellido = e.target.lastName.value;
         const telefono = e.target.telefono.value;
         const obraSocial = e.target.obraSocial.value;
         const correo = e.target.email.value;
@@ -113,7 +114,7 @@ const Citas = () => {
         const fecha = e.target.fecha.value;
         const motivosTurno = e.target.motivosTurno.value;
 
-        if (!nombre || !correo || !documento || !tipo1 || !fecha || !motivosTurno || !obraSocial || !telefono) {
+        if (!nombre || !correo || !documento || !tipo1 || !fecha || !motivosTurno || !obraSocial || !telefono || !apellido) {
             Swal.fire({
               title: 'Error',
               text: 'Por favor, completa todos los campos antes de enviar el formulario.',
@@ -138,6 +139,7 @@ const Citas = () => {
                 await addDoc(collection(db, 'citas'), {
                     uid: uid,
                     documento: documento,
+                    apellido: apellido,
                     email: correo,
                     telefono: telefono,
                     obraSocial: obraSocial,

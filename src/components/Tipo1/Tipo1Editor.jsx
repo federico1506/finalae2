@@ -13,10 +13,12 @@ import {
   import Swal from 'sweetalert2'
   import { useEffect, useState} from 'react';
   import { useAuth } from '../../AuthContext';
+  import { useNavigate } from "react-router-dom";
 
 const db = getFirestore(appFirebase);
 
 const Tipo1Editor = () => {
+  const navigate = useNavigate();
   const { userEmail } = useAuth();
   const citasRef = collection(db, 'citas');
   const doctoresRef = collection (db, 'doctores');
@@ -80,6 +82,11 @@ const cancelarCita = async (emailCita) => {
   }
 };
 
+ // Refactored function to edit appointment by passing citaId as state to the navigate function
+ const editarCita = (citaId) => {
+  navigate(`/ModificarCita`, { state: { citaId } });
+};
+
   return (
     <div>
       <h1>Gestion de citas doctores</h1>
@@ -119,6 +126,11 @@ const cancelarCita = async (emailCita) => {
             <Td>
             <Button
               colorScheme="blue"
+              onClick={() => {
+                if (window.confirm("¿Estás seguro de que quieres editar esta cita?")) {
+                  editarCita(cita.uid);
+                }
+              }}
             >
               Editar Cita
             </Button>
