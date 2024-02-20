@@ -1,5 +1,11 @@
 import {Box, Card, Image, Stack, CardBody, CardFooter, Button, Text, Heading} from "@chakra-ui/react"
+import { useNavigate } from "react-router-dom";
 const Cards = () => {
+    const navigate = useNavigate();
+
+    const toRegister = () => {
+      navigate("/Register");
+    };
   return (
     <Box display={"flex"}  justifyContent="center" alignItems="center" height="64vh" gap={6}>
         <Box>
@@ -8,27 +14,27 @@ const Cards = () => {
                 overflow='hidden'
                 variant='outline'
                 w={"100vh"}
+                mb={"20px"}
                 >
                 <Image
                     objectFit='cover'
                     maxW={{ base: '100%', sm: '200px' }}
-                    src='https://images.unsplash.com/photo-1667489022797-ab608913feeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHw5fHx8ZW58MHx8fHw%3D&auto=format&fit=crop&w=800&q=60'
+                    src='https://media.istockphoto.com/id/1344779917/es/vector/dise%C3%B1o-vectorial-del-edificio-del-hospital-del-centro-m%C3%A9dico.jpg?s=612x612&w=0&k=20&c=YCc3g_7qpPQt1VUtlFTrd6U164PVs_N4wd2FNlFh66A='
                     alt='Caffe Latte'
                 />
 
                 <Stack>
                     <CardBody>
-                    <Heading size='md'>The perfect latte</Heading>
+                    <Heading size='md'>La aplicación perfecta</Heading>
 
                     <Text py='2'>
-                        Caffè latte is a coffee beverage of Italian origin made with espresso
-                        and steamed milk.
+                    Optimizando la atención médica: un programa integral de gestión hospitalaria.
                     </Text>
                     </CardBody>
 
                     <CardFooter>
-                    <Button variant='solid' colorScheme='blue'>
-                        Buy Latte
+                    <Button variant='solid' colorScheme='blue' onClick={toRegister}>
+                        Optimiza
                     </Button>
                     </CardFooter>
                 </Stack>
@@ -43,23 +49,22 @@ const Cards = () => {
                 <Image
                     objectFit='cover'
                     maxW={{ base: '100%', sm: '200px' }}
-                    src='https://images.unsplash.com/photo-1667489022797-ab608913feeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHw5fHx8ZW58MHx8fHw%3D&auto=format&fit=crop&w=800&q=60'
+                    src='https://fixner.com/wp-content/uploads/2020/04/Cabecera-Gestion-de-trabajos.jpg'
                     alt='Caffe Latte'
                 />
 
                 <Stack>
                     <CardBody>
-                    <Heading size='md'>The perfect latte</Heading>
+                    <Heading size='md'>Organiza tu cita</Heading>
 
                     <Text py='2'>
-                        Caffè latte is a coffee beverage of Italian origin made with espresso
-                        and steamed milk.
+                        Gestión de citas hospitalarias eficiente, rápida y segura para realizar desde la comodidad de su hogar.
                     </Text>
                     </CardBody>
 
                     <CardFooter>
-                    <Button variant='solid' colorScheme='blue'>
-                        Buy Latte
+                    <Button variant='solid' colorScheme='blue' onClick={toRegister}>
+                        Organiza
                     </Button>
                     </CardFooter>
                 </Stack>
@@ -67,9 +72,9 @@ const Cards = () => {
         </Box>
 
         <Box>
-        <Card>
+        <Card p={"20px"} textAlign={"center"} fontWeight={"600"}>
             <CardBody>
-                <Text>View a summary of all your customers over the last month.</Text>
+                <Text>La aplicación de gestión hospitalaria proporciona una solución integral para administrar citas médicas, pacientes e historias clínicas. Con funciones de programación y seguimiento  facilita una atención eficiente y de calidad.</Text>
             </CardBody>
             </Card>
         </Box>
