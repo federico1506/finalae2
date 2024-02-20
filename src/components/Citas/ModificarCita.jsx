@@ -54,6 +54,7 @@ const ModificarCita = () => {
       }
     };
 
+    // Debugging
     useEffect(() => {
       console.log('BlockedDates');
       console.log(blockedDates);
@@ -88,92 +89,93 @@ const ModificarCita = () => {
   const { citaId: citaUid } = state || {};
   const [citaData, setCitaData] = useState(null);
   useEffect(() => {
-  const fetchCitaData = async () => {
-    if (citaUid) {
-      const citasQuery = query(collection(db, 'citas'), where('uid', '==', citaUid));
-      try {
-        const querySnapshot = await getDocs(citasQuery);
-        if (!querySnapshot.empty) {
-          const citaData = querySnapshot.docs[0].data();
-          setCitaData(citaData);
-          if (!selectedObraSocial && citaData) {
-            setSelectedObraSocial(citaData.obraSocial);
+    const fetchCitaData = async () => {
+      if (citaUid) {
+        const citasQuery = query(collection(db, 'citas'), where('uid', '==', citaUid));
+        try {
+          const querySnapshot = await getDocs(citasQuery);
+          if (!querySnapshot.empty) {
+            const fetchedCitaData = querySnapshot.docs[0].data();
+            if (!citaData) {
+              setCitaData(fetchedCitaData);
+            }
+            if (!selectedObraSocial && fetchedCitaData) {
+              setSelectedObraSocial(fetchedCitaData.obraSocial);
+            }
+            if (!selectedTipo1 && fetchedCitaData) {
+              setSelectedTipo1(fetchedCitaData.tipo1);
+              fetchDoctorDates(fetchedCitaData.tipo1);
+            }
+            console.log("Cita data:", fetchedCitaData);
+          } else {
+            console.log("No such cita found with UID:", citaUid);
           }
-          if (!selectedTipo1 && citaData) {
-              setSelectedTipo1(citaData.tipo1);
-              fetchDoctorDates(citaData.tipo1);
+        } catch (error) {
+          console.error("Error fetching cita with query:", error);
         }
-          console.log("Cita data:", citaData);
-        } else {
-          console.log("No such cita found with UID:", citaUid);
-        }
-      } catch (error) {
-        console.error("Error fetching cita with query:", error);
       }
+    };
+    if (!citaData) {
+      fetchCitaData();
     }
-  };
-  fetchCitaData();
-}, [citaUid,selectedObraSocial, selectedTipo1, selectedDate]);
+  }, [citaUid, selectedDate]);
 
-// FUNCION PARA ACTUALIZAR CITA
-const functActualizarCita = async (e) => {
-  e.preventDefault();
-  const uid = citaUid;
-  const nombre = e.target.name.value;
-  const apellido = e.target.lastName.value;
-  const telefono = e.target.telefono.value;
-  const obraSocial = e.target.obraSocial.value;
-  const correo = e.target.email.value;
-  const documento = e.target.dni.value;
-  const tipo1 = e.target.tipo1.value;
-  const fecha = e.target.fecha.value;
-  const motivosTurno = e.target.motivosTurno.value;
 
-  if (!nombre || !correo || !documento || !tipo1 || !fecha || !motivosTurno || !obraSocial || !telefono || !apellido) {
+  const actualizarCita = async (event) => {
+  event.preventDefault();
+
+  // Validation: Check if all required fields are filled
+  const requiredFields = [
+    'name', 'lastName', 'telefono', 'email', 'dni', 'motivosTurno'
+  ];
+  const isAnyFieldEmpty = requiredFields.some(field => !event.target[field].value);
+  if (isAnyFieldEmpty || !selectedObraSocial || !selectedTipo1) {
     Swal.fire({
       title: 'Error',
-      text: 'Por favor, completa todos los campos antes de actualizar la cita',
+      text: 'Por favor, completa todos los campos antes de enviar el formulario.',
       icon: 'error',
       confirmButtonText: 'Aceptar',
       scrollbarPadding: false
     });
     return;
   }
+
+  // Use existing date if 'fecha' field has not been modified
+  const fechaValue = event.target.fecha.value || event.target.fechaAnterior.value;
+
+  const citaUpdate = {
+    nombre: event.target.name.value,
+    apellido: event.target.lastName.value,
+    telefono: event.target.telefono.value,
+    correo: event.target.email.value,
+    documento: event.target.dni.value,
+    fecha: fechaValue,
+    motivosTurno: event.target.motivosTurno.value,
+    uid: citaUid,
+    obraSocial: selectedObraSocial,
+    tipo1: selectedTipo1,
+  };
+
   try {
-    const citaRef = doc(db, 'citas', citaUid);
-await updateDoc(citaRef, {
-  documento: documento,
-  apellido: apellido,
-  email: correo,
-  telefono: telefono,
-  obraSocial: obraSocial,
-  nombre: nombre,
-  tipo1: tipo1,
-  fecha: fecha,
-  motivosTurno: motivosTurno,
-});
-    console.log('Cita actualizada con éxito');
-    Swal.fire({
-      title: '¡Éxito!',
-      text: 'Su cita ha sido actualizada con éxito!',
-      icon: 'success',
-      confirmButtonText: 'Aceptar',
-      scrollbarPadding: false
-    });
-    formRef.current.reset();
-    setSelectedTipo1('');
-    setSelectedDate(null);
+    const citasQuery = query(collection(db, 'citas'), where('uid', '==', citaUid));
+    const querySnapshot = await getDocs(citasQuery);
+    if (!querySnapshot.empty) {
+      const citaDocRef = querySnapshot.docs[0].ref;
+      await updateDoc(citaDocRef, citaUpdate);
+      console.log('Cita actualizada con éxito');
+      Swal.fire({
+        text: 'Su cita a sido actualizada con éxito!',
+        icon: 'success',
+        confirmButtonText: 'Aceptar',
+        scrollbarPadding: false
+      })
+    } else {
+      console.error('No se encontró la cita con UID:', citaUid);
+    }
   } catch (error) {
-    Swal.fire({
-      title: 'Error',
-      text: 'Error al actualizar la cita',
-      icon: 'error',
-      confirmButtonText: 'Aceptar',
-      scrollbarPadding: false
-    });
-    console.error('Error al actualizar la cita', error);
+    console.error('Error al actualizar la cita:', error);
   }
-}
+};
   return (
     <div>
       <Box display={"flex"} textAlign={"center"} alignItems={'center'} pt={"20px"} flexDirection={"column"}>
@@ -182,7 +184,7 @@ await updateDoc(citaRef, {
       </Box>
 
       <Box p={"60px"} m={"60px"}>
-        <form onSubmit={functActualizarCita} ref={formRef}>
+        <form ref={formRef} onSubmit={actualizarCita}>
           {citaData && (
             <>
             <Box display={"flex"} justifyContent={"space-between"}>
@@ -235,6 +237,7 @@ await updateDoc(citaRef, {
                 placeholder="Seleccione su doctor a cargo"
                 value={selectedTipo1}
                 onChange={tipo1Change}
+                isDisabled={true}
               >
               {doctores.map((tipo_1) => (
               <option key={tipo_1.uid} value={tipo_1.uid}>
